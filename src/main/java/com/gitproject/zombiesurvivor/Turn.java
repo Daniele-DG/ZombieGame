@@ -8,6 +8,5 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class Turn {
-    private Survivor survivor;
     private Action[] actions = new Action[3];
 }
