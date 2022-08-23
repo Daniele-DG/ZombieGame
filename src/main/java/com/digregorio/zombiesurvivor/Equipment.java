@@ -1,6 +1,7 @@
 package com.digregorio.zombiesurvivor;
 
-import exceptions.NotFoundEquipmentException;
+import com.digregorio.zombiesurvivor.exceptions.NotFoundEquipmentException;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -26,6 +27,7 @@ public class Equipment {
                 return toolToRemove;
             }
         }
-        throw new NotFoundEquipmentException("Tool not found in your selected inventory.");
+        throw new NotFoundEquipmentException(
+                "Tool not found in your selected inventory.");
     }
 }

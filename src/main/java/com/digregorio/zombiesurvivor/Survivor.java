@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import exceptions.*;
+import com.digregorio.zombiesurvivor.exceptions.*;
+
 import lombok.Data;
 import lombok.Singular;
 import lombok.ToString;

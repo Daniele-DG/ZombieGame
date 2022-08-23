@@ -1,4 +1,4 @@
-package exceptions;
+package com.digregorio.zombiesurvivor.exceptions;
 
 public class EndGameException extends RuntimeException {
 
