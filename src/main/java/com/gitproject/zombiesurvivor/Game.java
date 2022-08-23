@@ -1,6 +1,10 @@
 package com.gitproject.zombiesurvivor;
 
+import static com.gitproject.zombiesurvivor.Level.BLUE;
+
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import exceptions.*;
 import lombok.Data;
@@ -8,22 +12,36 @@ import lombok.Data;
 @Data
 public class Game {
 
-    private ArrayList<Survivor> gameOrder;
+    private ArrayList<Survivor> survivors;
+    private Level level;
 
     public void start() {
-        if (gameOrder == null)
-            this.gameOrder = new ArrayList<>();
+        if (survivors == null)
+            this.survivors = new ArrayList<>();
         else
-            gameOrder.clear();
+            survivors.clear();
+        this.level = BLUE;
     }
 
     public void addSurvivor(Survivor survivor) {
         verifyNameAlreadyTaken(survivor);
-        gameOrder.add(survivor);
+        survivors.add(survivor);
+        if (this.level.getMinExperience() < survivor.getCurrentLevel().getMinExperience())
+            this.level = survivor.getCurrentLevel();
+    }
+
+    public void addExperienceToSurvivor(Survivor survivor) {
+        List<Survivor> survivorsAlive = this.survivors.stream()
+                .filter(t -> !t.isDead() && t.getName().equals(survivor.getName())).collect(Collectors.toList());
+        if (!survivorsAlive.contains(survivor) || survivorsAlive.size() > 1)
+            throw new SurvivorNotFoundException("Survivor not found.");
+        survivorsAlive.get(0).incrementExperience(1);
+        if (survivorsAlive.get(0).getCurrentLevel().getMinExperience() > this.level.getMinExperience())
+            this.setLevel(survivorsAlive.get(0).getCurrentLevel());
     }
 
     public void addWound(Survivor s) {
-        gameOrder.forEach(t -> {
+        survivors.forEach(t -> {
             if (t.equals(s)) {
                 t.addWound();
                 if (t.isDead() && verifyEndGame())
@@ -33,11 +51,11 @@ public class Game {
     }
 
     private boolean verifyEndGame() {
-        return gameOrder.stream().filter(t -> !t.isDead()).count() < 1;
+        return survivors.stream().filter(t -> !t.isDead()).count() < 1;
     }
 
     private void verifyNameAlreadyTaken(Survivor survivor) {
-        for (Survivor s : gameOrder) {
+        for (Survivor s : survivors) {
             if (s.getName().equals(survivor.getName()))
                 throw new NameAlreadyExistException("There is a survivor with the same name. Choose another name.");
         }

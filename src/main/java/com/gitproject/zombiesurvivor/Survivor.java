@@ -1,9 +1,14 @@
 package com.gitproject.zombiesurvivor;
 
-import java.util.List;
+import static com.gitproject.zombiesurvivor.Level.BLUE;
 
-import exceptions.FullEquipmentException;
-import lombok.AllArgsConstructor;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import exceptions.*;
 import lombok.Data;
 import lombok.Singular;
 import lombok.ToString;
@@ -11,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Data
 @ToString
-@AllArgsConstructor
 @Slf4j
 public class Survivor {
 
@@ -20,6 +24,17 @@ public class Survivor {
     @Singular
     private List<Turn> turns;
     private Equipment equipment;
+    private int currentExperience;
+    private Level currentLevel;
+
+    public Survivor(String name, int wound) {
+        this.name = name;
+        this.wound = wound;
+        this.turns = new LinkedList<>();
+        this.equipment = new Equipment();
+        this.currentExperience = 0;
+        this.currentLevel = BLUE;
+    }
 
     public void addWound() {
         this.wound++;
@@ -38,6 +53,15 @@ public class Survivor {
 
     public boolean isDead() {
         return this.wound > 1;
+    }
+
+    public void incrementExperience(int expEarned) {
+        int oldExperience = currentExperience;
+        this.setCurrentExperience(currentExperience + expEarned);
+        Stream<Level> filteredLevels = Arrays.asList(Level.values()).stream().filter(t -> !t.equals(currentLevel)
+                && t.getMinExperience() < currentExperience && t.getMinExperience() > oldExperience);
+        if (filteredLevels.count() > 0)
+            this.setCurrentLevel(this.incrementLevel(filteredLevels));
     }
 
     public void addInHand(Tool toolToAdd) {
@@ -77,5 +101,12 @@ public class Survivor {
                 size++;
         }
         return size;
+    }
+
+    private Level incrementLevel(Stream<Level> filteredLevels) {
+        List<Level> availablesLevels = filteredLevels.collect(Collectors.toList());
+        if (availablesLevels.size() == 1)
+            return availablesLevels.get(0);
+        throw new LevelNotFoundException("Error during level update.");
     }
 }
