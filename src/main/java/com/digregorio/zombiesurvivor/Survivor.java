@@ -2,6 +2,7 @@ package com.digregorio.zombiesurvivor;
 
 import static com.digregorio.zombiesurvivor.Level.BLUE;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,7 +12,6 @@ import java.util.stream.Stream;
 import com.digregorio.zombiesurvivor.exceptions.*;
 
 import lombok.Data;
-import lombok.Singular;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,15 +22,14 @@ public class Survivor {
 
     private final String name;
     private int wound;
-    @Singular
     private List<Turn> turns;
     private Equipment equipment;
     private int currentExperience;
     private Level currentLevel;
 
-    public Survivor(String name, int wound) {
+    public Survivor(String name) {
         this.name = name;
-        this.wound = wound;
+        this.wound = 0;
         this.turns = new LinkedList<>();
         this.equipment = new Equipment();
         this.currentExperience = 0;
@@ -38,17 +37,24 @@ public class Survivor {
     }
 
     public void addWound() {
+        if (this.wound > 2)
+            return;
         this.wound++;
         log.info("Added wound to survivor: " + this);
-        Tool[] inHand = this.equipment.getInHand();
-        Tool toolRemoved = this.removeInHandTool(getLastElement(inHand));
-        try {
-            addInReserve(toolRemoved);
-        } catch (FullEquipmentException exception) {
-            Tool[] inReserve = this.equipment.getInReserve();
-            Tool removeInReserveTool = this.removeInReserveTool(getLastElement(inReserve));
-            log.info("Removed tool " + removeInReserveTool);
-            addInReserve(toolRemoved);
+        if (this.wound == 2)
+            return;
+        ArrayList<Tool> inHand = this.equipment.getInHand();
+        if (!inHand.isEmpty()) {
+            Tool toolRemoved = this.removeInHandTool(getLastElement(inHand));
+            try {
+
+                addInReserve(toolRemoved);
+            } catch (FullEquipmentException exception) {
+                ArrayList<Tool> inReserve = this.equipment.getInReserve();
+                Tool removeInReserveTool = this.removeInReserveTool(getLastElement(inReserve));
+                log.info("Removed tool " + removeInReserveTool);
+                addInReserve(toolRemoved);
+            }
         }
     }
 
@@ -57,57 +63,47 @@ public class Survivor {
     }
 
     public void incrementExperience(int expEarned) {
-        int oldExperience = currentExperience;
         this.setCurrentExperience(currentExperience + expEarned);
-        Stream<Level> filteredLevels = Arrays.asList(Level.values()).stream().filter(t -> !t.equals(currentLevel)
-                && t.getMinExperience() < currentExperience && t.getMinExperience() > oldExperience);
-        if (filteredLevels.count() > 0)
-            this.setCurrentLevel(this.incrementLevel(filteredLevels));
+        this.updateLevel();
     }
 
     public void addInHand(Tool toolToAdd) {
-        Tool[] inHand = this.equipment.getInHand();
-        if (getNumberOfTools(inHand) > 1) {
+        ArrayList<Tool> inHand = this.equipment.getInHand();
+        if (inHand.size() >= Equipment.MAX_IN_HAND - wound) {
             throw new FullEquipmentException("In hand equipment is full. Please move some item in your reserve.");
         }
-        this.equipment.addToEmptyPosition(toolToAdd, inHand, inHand.length, wound);
+        this.equipment.addToInHand(toolToAdd);
     }
 
     public void addInReserve(Tool toolToAdd) {
-        Tool[] inReserve = this.equipment.getInReserve();
-        if (getNumberOfTools(inReserve) > 3) {
-            throw new FullEquipmentException("In reserve equipment is full. Please move some item in your reserve.");
+        ArrayList<Tool> inReserve = this.equipment.getInReserve();
+        if (inReserve.size() >= Equipment.MAX_IN_RESERVE) {
+            throw new FullEquipmentException("In reserve equipment is full. Please remove some item to add a new one.");
         }
-        this.equipment.addToEmptyPosition(toolToAdd, inReserve, inReserve.length, wound);
+        this.equipment.addToInReserve(toolToAdd);
     }
 
     public Tool removeInHandTool(Tool toolToRemove) {
-        Tool[] inHand = this.equipment.getInHand();
-        return this.equipment.remove(toolToRemove, inHand, inHand.length);
+        return this.equipment.removeInHandTool(toolToRemove);
     }
 
     public Tool removeInReserveTool(Tool toolToRemove) {
-        Tool[] inReserve = this.equipment.getInReserve();
-        return this.equipment.remove(toolToRemove, inReserve, inReserve.length);
+        return this.equipment.removeInReserveTool(toolToRemove);
     }
 
-    private Tool getLastElement(Tool[] tools) {
-        return tools[tools.length - 1];
-    }
-
-    private int getNumberOfTools(Tool[] tools) {
-        int size = 0;
-        for (int i = 0; i < tools.length; i++) {
-            if (tools[i] != null)
-                size++;
+    private Tool getLastElement(ArrayList<Tool> tools) {
+        if (tools.isEmpty()) {
+            return null;
         }
-        return size;
+        return tools.get(tools.size() - 1);
     }
 
-    private Level incrementLevel(Stream<Level> filteredLevels) {
-        List<Level> availablesLevels = filteredLevels.collect(Collectors.toList());
-        if (availablesLevels.size() == 1)
-            return availablesLevels.get(0);
-        throw new LevelNotFoundException("Error during level update.");
+    private void updateLevel() {
+        Arrays.stream(Level.values()).forEach(level -> {
+            if (level.getMinExperience() > this.currentLevel.getMinExperience()
+                    && level.getMinExperience() <= this.currentExperience) {
+                this.currentLevel = level;
+            }
+        });
     }
 }
