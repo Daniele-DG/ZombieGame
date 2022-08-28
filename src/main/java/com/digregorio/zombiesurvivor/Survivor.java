@@ -9,11 +9,13 @@ import java.util.List;
 import com.digregorio.zombiesurvivor.exceptions.*;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Data
 @ToString
+@EqualsAndHashCode
 @Slf4j
 public class Survivor {
 
@@ -38,8 +40,10 @@ public class Survivor {
             return;
         this.wound++;
         log.info("Added wound to survivor: " + this);
-        if (this.wound == 2)
+        if (this.wound == 2) {
+            log.info("Survivor dead.");
             return;
+        }
         ArrayList<Tool> inHand = this.equipment.getInHand();
         if (!inHand.isEmpty()) {
             Tool toolRemoved = this.removeInHandTool(getLastElement(inHand));

@@ -40,7 +40,7 @@ class EquipmentTest {
         exceptionThrowed = assertThrows(FullEquipmentException.class,
                 () -> survivor.addInReserve(FRYING_PAN));
         assertThat(exceptionThrowed.getMessage())
-                .contains("In reserve equipment is full. Please move some item in your reserve.");
+                .contains("In reserve equipment is full. Please remove some item to add a new one.");
     }
 
     @Test

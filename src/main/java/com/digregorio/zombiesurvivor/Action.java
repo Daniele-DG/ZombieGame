@@ -1,5 +1,5 @@
 package com.digregorio.zombiesurvivor;
 
 public enum Action {
-    AZIONE, MOVIMENTO;
+    AZIONE, MOVIMENTO, SCHIVATA, DISINGAGGIO;
 }

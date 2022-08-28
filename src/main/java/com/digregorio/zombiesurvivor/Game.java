@@ -42,6 +42,8 @@ public class Game {
     }
 
     public void addWound(Survivor s) {
+        if (survivors.isEmpty())
+            throw new SurvivorNotFoundException("No survivor has been found.");
         survivors.forEach(t -> {
             if (t.equals(s)) {
                 t.addWound();
