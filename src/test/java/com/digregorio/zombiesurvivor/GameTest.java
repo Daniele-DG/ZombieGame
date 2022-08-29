@@ -98,4 +98,22 @@ class GameTest {
         assertThat(exceptionEndGame.getMessage()).contains("The game is over. No survivor left.");
     }
 
+    @Test
+    void testHistory() {
+        Game g = new Game();
+        assertThat(g.getHistory()).isEmpty();
+        g.start();
+        assertThat(g.getHistory().size()).isEqualTo(1);
+        assertThat(g.getHistory()).contains("Game start.");
+        Survivor survivor = new Survivor("Name");
+        g.addSurvivor(survivor);
+        assertThat(g.getHistory().getFirst()).contains("Added survivor");
+        g.addExperienceToSurvivor(survivor);
+        assertThat(g.getHistory().getFirst()).contains("Survivor", "earned 1 exp point.");
+        g.addWound(survivor);
+        assertThat(g.getHistory().getFirst()).contains("Added wound to survivor");
+        assertThrows(EndGameException.class, () -> g.addWound(survivor));
+        assertThat(g.getHistory().get(1)).contains("Added wound to survivor");
+        assertThat(g.getHistory().getFirst()).contains("is dead.");
+    }
 }
